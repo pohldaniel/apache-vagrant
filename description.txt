@@ -1,0 +1,14 @@
+vagrant version
+vagrant init
+vagrant up --provision-with startup
+vagrant ssh
+vagrant halt
+vagrant reload --provision
+
+vagrant provision --provision-with initDB
+
+ps -eaf | grep java
+sudo kill
+
+http://localhost/test
+http://localhost/phpmyadmin   DBUser "Username:dbmanager Password:salt" RootUser "Username:root Password:root"
