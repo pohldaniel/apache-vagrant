@@ -45,9 +45,10 @@ Vagrant.configure("2") do |config|
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
   # config.vm.synced_folder "../data", "/vagrant_data"
-  config.vm.synced_folder "html", "/var/www/html"
-  config.vm.synced_folder "InitDB", "/usr/InitDB"
+  config.vm.synced_folder "html", "/var/www/html" 
   config.vm.synced_folder "conf", "/usr/conf"
+  config.vm.synced_folder "InitDB", "/usr/InitDB"
+  config.vm.synced_folder "Service", "/usr/Service"
   # Disable the default share of the current code directory. Doing this
   # provides improved isolation between the vagrant box and your host
   # by making sure your Vagrantfile isn't accessible to the vagrant box.
@@ -74,7 +75,7 @@ Vagrant.configure("2") do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
   # documentation for more information about their specific syntax and use.
-  config.vm.provision "startup", type: "shell", inline: <<-SHELL
+  config.vm.provision "setup", type: "shell", inline: <<-SHELL
     # Update and upgrade the server packages.
     sudo apt-get update
     sudo apt-get -y upgrade
@@ -118,13 +119,25 @@ Vagrant.configure("2") do |config|
     sudo a2enmod proxy_http
     sudo a2enmod proxy_balancer
     sudo a2enmod lbmethod_byrequests
-    sudo systemctl restart apache2 
+    sudo a2enmod headers
+    sudo systemctl restart apache2
+
+    #sudo mvn -s /usr/InitDB/settings.xml -f /usr/InitDB/pom.xml -DskipTests=true clean install
+    #sudo cp /usr/InitDB/target/InitDB*.jar /usr/InitDB/target/InitDB.jar
+    #nohup java -jar /usr/InitDB/target/InitDB.jar > /usr/InitDB/log.txt 2>&1 &
+    
   SHELL
 
   config.vm.provision "initDB", type: "shell", inline: <<-SHELL
     sudo mvn -s /usr/InitDB/settings.xml -f /usr/InitDB/pom.xml -DskipTests=true clean install
     sudo cp /usr/InitDB/target/InitDB*.jar /usr/InitDB/target/InitDB.jar
     java -jar /usr/InitDB/target/InitDB.jar
+  SHELL
+
+  config.vm.provision "run", type: "shell", inline: <<-SHELL
+    sudo mvn -s /usr/Service/settings.xml -f /usr/Service/pom.xml -DskipTests=true clean install
+    sudo cp /usr/Service/target/Service*.jar /usr/Service/target/Service.jar
+    nohup java -jar /usr/Service/target/Service.jar > /usr/Service/log.txt 2>&1 &
   SHELL
 
 end

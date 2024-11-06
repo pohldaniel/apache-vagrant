@@ -12,7 +12,6 @@ import org.springframework.context.annotation.PropertySource;
 
 import de.app.utils.HibernateUtilMySql;
 import de.app.services.TimesheetService;
-import de.app.database.InitDatabase;
 import de.app.utils.HibernateConfig;
 import jakarta.annotation.PostConstruct;
 
@@ -38,10 +37,7 @@ public class Main extends SpringBootServletInitializer{
 	public void init() throws Exception { 
     	HibernateUtilMySql.getInstance().createSessionFactory("jdbc:mysql://localhost:3306/timeradb?useSSL=false&allowPublicKeyRetrieval=true", "dbmanager", "salt");
     	HibernateConfig.setConnectionMySql();
-    	
-    	InitDatabase.getInstance().setTimesheetService(timesheetService);		
-		InitDatabase.getInstance().emptyRepositories();
-		InitDatabase.getInstance().fillRepositories();
-		System.exit(0);
+
+		
     }
 }

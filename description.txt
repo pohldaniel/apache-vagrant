@@ -1,11 +1,14 @@
 vagrant version
 vagrant init
-vagrant up --provision-with startup
+vagrant up --provision-with setup
 vagrant ssh
 vagrant halt
-vagrant reload --provision
+
 
 vagrant provision --provision-with initDB
+vagrant provision --provision-with run
+
+vagrant up --provision-with run
 
 ps -eaf | grep java
 sudo kill
