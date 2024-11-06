@@ -10,8 +10,22 @@ vagrant provision --provision-with run
 
 vagrant up --provision-with run
 
+vagrant up --no-provision
+
 ps -eaf | grep java
+
+sudo pkill -9 -f Service.jar
+
 sudo kill
 
-http://localhost/test
+http://localhost/api/timesheet/getAll
 http://localhost/phpmyadmin   DBUser "Username:dbmanager Password:salt" RootUser "Username:root Password:root"
+
+
+mkvirtualenv django_api --python=python3
+workon django_api
+deactivate
+
+python3 -m django startproject django_project
+
+python3 django_project/manage.py startapp django_api

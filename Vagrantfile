@@ -49,6 +49,7 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder "conf", "/usr/conf"
   config.vm.synced_folder "InitDB", "/usr/InitDB"
   config.vm.synced_folder "Service", "/usr/Service"
+  config.vm.synced_folder "Django", "/usr/Django"
   # Disable the default share of the current code directory. Doing this
   # provides improved isolation between the vagrant box and your host
   # by making sure your Vagrantfile isn't accessible to the vagrant box.
@@ -122,10 +123,19 @@ Vagrant.configure("2") do |config|
     sudo a2enmod headers
     sudo systemctl restart apache2
 
-    #sudo mvn -s /usr/InitDB/settings.xml -f /usr/InitDB/pom.xml -DskipTests=true clean install
-    #sudo cp /usr/InitDB/target/InitDB*.jar /usr/InitDB/target/InitDB.jar
-    #nohup java -jar /usr/InitDB/target/InitDB.jar > /usr/InitDB/log.txt 2>&1 &
-    
+    # Setup virtualenvwrapper
+    sudo apt install -y python3-pip
+	  pip install virtualenvwrapper
+    if ! grep -q VIRTUALENV_ALREADY_ADDED /home/vagrant/.bashrc; then
+        echo "# VIRTUALENV_ALREADY_ADDED" >> /home/vagrant/.bashrc
+        echo "WORKON_HOME=~/.virtualenvs" >> /home/vagrant/.bashrc
+        echo "PROJECT_HOME=/vagrant" >> /home/vagrant/.bashrc
+        echo "source /usr/local/bin/virtualenvwrapper.sh" >> /home/vagrant/.bashrc
+    fi   
+    mkvirtualenv django_api --python=python3
+    workon django_api
+    python3 -m pip install Django==5.1.2
+    python3 -m pip install Djangorestframework==3.15.2
   SHELL
 
   config.vm.provision "initDB", type: "shell", inline: <<-SHELL
@@ -133,10 +143,17 @@ Vagrant.configure("2") do |config|
     sudo cp /usr/InitDB/target/InitDB*.jar /usr/InitDB/target/InitDB.jar
     java -jar /usr/InitDB/target/InitDB.jar
   SHELL
+  
+  config.vm.provision "python", type: "shell", inline: <<-SHELL
+    
+  SHELL
 
-  config.vm.provision "run", type: "shell", inline: <<-SHELL
+  config.vm.provision "build", type: "shell", inline: <<-SHELL
     sudo mvn -s /usr/Service/settings.xml -f /usr/Service/pom.xml -DskipTests=true clean install
     sudo cp /usr/Service/target/Service*.jar /usr/Service/target/Service.jar
+  SHELL
+
+  config.vm.provision "run", type: "shell", inline: <<-SHELL
     nohup java -jar /usr/Service/target/Service.jar > /usr/Service/log.txt 2>&1 &
   SHELL
 
