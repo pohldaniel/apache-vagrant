@@ -84,7 +84,7 @@ Vagrant.configure("2") do |config|
     sudo locale-gen de_DE.UTF-8
     sudo update-locale LANG=de_DE.UTF-8
 	  sudo timedatectl set-timezone Europe/Berlin
-    sudo apt install apache2 wget vim unzip zip -y
+    sudo apt install apache2 wget vim unzip zip libapache2-mod-wsgi-py3 -y
 	  sudo systemctl start apache2
 
 	  DBUSER=root
@@ -121,10 +121,14 @@ Vagrant.configure("2") do |config|
     sudo a2enmod proxy_balancer
     sudo a2enmod lbmethod_byrequests
     sudo a2enmod headers
+    sudo a2enmod wsgi 
     sudo systemctl restart apache2
 
     # Setup virtualenvwrapper
-    sudo apt install -y python3-pip
+    sudo apt install python3-pip -y
+    #sudo apt-get install pkg-config -y
+    #sudo apt-get install default-libmysqlclient-dev -y
+    
 	  pip install virtualenvwrapper
     if ! grep -q VIRTUALENV_ALREADY_ADDED /home/vagrant/.bashrc; then
         echo "# VIRTUALENV_ALREADY_ADDED" >> /home/vagrant/.bashrc
@@ -133,9 +137,12 @@ Vagrant.configure("2") do |config|
         echo "source /usr/local/bin/virtualenvwrapper.sh" >> /home/vagrant/.bashrc
     fi   
     mkvirtualenv django_api --python=python3
-    workon django_api
-    python3 -m pip install Django==5.1.2
-    python3 -m pip install Djangorestframework==3.15.2
+    #workon django_api
+    #echo $VIRTUAL_ENV
+    .virtualenvs/django_api/bin/python3 -m pip install Django==5.1.2
+    .virtualenvs/django_api/bin/python3 -m pip install Djangorestframework==3.15.2
+    .virtualenvs/django_api/bin/python3 -m pip install mysqlclient
+    .virtualenvs/django_api/bin/python3 -m pip install uwsgi
   SHELL
 
   config.vm.provision "initDB", type: "shell", inline: <<-SHELL
@@ -145,16 +152,24 @@ Vagrant.configure("2") do |config|
   SHELL
   
   config.vm.provision "python", type: "shell", inline: <<-SHELL
-    
+    cd /usr/Django
+    sudo ../../home/vagrant/.virtualenvs/django_api/bin/python3 manage.py collectstatic --no-input
+    nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
+    cd ~
   SHELL
 
   config.vm.provision "build", type: "shell", inline: <<-SHELL
+    sudo pkill -9 -f Service.jar
     sudo mvn -s /usr/Service/settings.xml -f /usr/Service/pom.xml -DskipTests=true clean install
     sudo cp /usr/Service/target/Service*.jar /usr/Service/target/Service.jar
   SHELL
 
   config.vm.provision "run", type: "shell", inline: <<-SHELL
     nohup java -jar /usr/Service/target/Service.jar > /usr/Service/log.txt 2>&1 &
+    cd /usr/Django
+    sudo ../../home/vagrant/.virtualenvs/django_api/bin/python3 manage.py collectstatic --no-input
+    nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
+    cd ~
   SHELL
 
 end

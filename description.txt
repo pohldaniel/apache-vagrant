@@ -4,15 +4,17 @@ vagrant up --provision-with setup
 vagrant ssh
 vagrant halt
 
-
+vagrant provision --provision-with build
 vagrant provision --provision-with initDB
 vagrant provision --provision-with run
 
+vagrant up --provision-with build
 vagrant up --provision-with run
 
 vagrant up --no-provision
 
 ps -eaf | grep java
+ps -eaf | grep uwsgi
 
 sudo pkill -9 -f Service.jar
 
@@ -23,9 +25,85 @@ http://localhost/phpmyadmin   DBUser "Username:dbmanager Password:salt" RootUser
 
 
 mkvirtualenv django_api --python=python3
+pip install mysqlclient
+python3 django_project/manage.py makemigrations django_api
+python3 django_project/manage.py migrate
+
 workon django_api
 deactivate
 
 python3 -m django startproject django_project
 
 python3 django_project/manage.py startapp django_api
+
+
+sudo python3 /usr/Django/manage.py runserver 0.0.0.0:8000
+sudo pip3 install pymysql
+
+sudo pip install mysqlclient
+
+sudo python3 -m pip install Django==5.1.2
+sudo python3 -m pip install Djangorestframework==3.15.2
+
+WSGIPythonPath /usr/Django/demo_site
+
+<VirtualHost *:80>
+		<Location /api>
+			ProxyPass http://localhost:8080/api
+			ProxyPassReverse http://localhost:8080/api
+			Header always set Content-Type "application/json"
+		</Location>
+		
+		<Location /admin>
+			ProxyPass http://localhost:8000/admin
+			ProxyPassReverse http://localhost:8000/admin
+		</Location>
+		
+        # The ServerName directive sets the request scheme, hostname and port that
+        # the server uses to identify itself. This is used when creating
+        # redirection URLs. In the context of virtual hosts, the ServerName
+        # specifies what hostname must appear in the request's Host: header to
+        # match this virtual host. For the default virtual host (this file) this
+        # value is not decisive as it is used as a last resort host regardless.
+        # However, you must set it for any further virtual host explicitly.
+        #ServerName www.example.com
+		Header always set Content-Security-Policy "default-src 'none';style-src 'unsafe-inline' localhost;script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' localhost;script-src-elem 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' localhost;object-src 'self';img-src data: localhost;"
+        ServerAdmin webmaster@localhost
+        #DocumentRoot /usr/Django
+		DocumentRoot /var/www/html
+
+        #Alias /static "/usr/Django/demo_site/static"
+
+        WSGIScriptAlias / /usr/Django/profiles_project/wsgi.py
+		<Directory /usr/Django>
+			Order allow,deny
+			Allow from all
+			Require all granted
+			<Files wsgi.py>
+				Require all granted
+			</Files>
+		</Directory>
+        # Available loglevels: trace8, ..., trace1, debug, info, notice, warn,
+        # error, crit, alert, emerg.
+        # It is also possible to configure the loglevel for particular
+        # modules, e.g.
+        #LogLevel info ssl:warn
+
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+        # For most configuration files from conf-available/, which are
+        # enabled or disabled at a global level, it is possible to
+        # include a line for only one particular virtual host. For example the
+        # following line enables the CGI configuration for this host only
+        # after it has been globally disabled with "a2disconf".
+        #Include conf-available/serve-cgi-bin.conf
+</VirtualHost>
+
+sudo chmod -R 777 /usr/Django/profiles_project
+
+
+
+
+sudo cp /usr/conf/000-default.conf /etc/apache2/sites-available/000-default.conf
+sudo systemctl restart apache2

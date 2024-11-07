@@ -15,7 +15,7 @@ import de.app.rest.TimesheetRestController;
 import de.app.services.TimesheetService;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/timera")
 public class TimesheetRestController {
 	private Logger LOG = LoggerFactory.getLogger(TimesheetRestController.class);
 	

@@ -11,7 +11,7 @@ public class FilterInitializer {
 	public FilterRegistrationBean<PublicAPIFilter> publicAPIFilterRegistration() {	
 		FilterRegistrationBean<PublicAPIFilter> registration = new FilterRegistrationBean<PublicAPIFilter>();
 		registration.setFilter(new PublicAPIFilter());
-		registration.addUrlPatterns( "/api/*");
+		registration.addUrlPatterns( "/timera/*");
 		return registration;
 	}
 }
