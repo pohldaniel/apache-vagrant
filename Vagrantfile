@@ -35,7 +35,7 @@ Vagrant.configure("2") do |config|
   # within the machine from a port on the host machine and only allow access
   # via 127.0.0.1 to disable public access
   config.vm.network "forwarded_port", guest: 80, host: 80, host_ip: "127.0.0.1"
-  config.vm.network "forwarded_port", guest: 8000, host: 8000, host_ip: "127.0.0.1"
+  #config.vm.network "forwarded_port", guest: 8000, host: 8000, host_ip: "127.0.0.1"
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
   # config.vm.network "private_network", ip: "192.168.33.10"
@@ -169,11 +169,20 @@ Vagrant.configure("2") do |config|
     sudo cp /usr/Service/target/Service*.jar /usr/Service/target/Service.jar
   SHELL
 
-  config.vm.provision "run", type: "shell", inline: <<-SHELL
+  config.vm.provision "run-all", type: "shell", inline: <<-SHELL
     sudo pkill -9 -f Service.jar
     nohup java -jar /usr/Service/target/Service.jar > /usr/Service/log.txt 2>&1 &
 
     sudo killall uwsgi
+    sleep 2
+    cd /usr/Django
+    nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --static-map /static=/var/www/html/static --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
+    cd ~
+  SHELL
+
+  config.vm.provision "run-python", type: "shell", inline: <<-SHELL
+    sudo killall uwsgi
+    sleep 2
     cd /usr/Django
     nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --static-map /static=/var/www/html/static --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
     cd ~
