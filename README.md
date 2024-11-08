@@ -1,2 +1,2 @@
 # apache-vagrant
-Attempion to get familiar with Ubuntu
+Attemption to get familiar with Ubuntu
