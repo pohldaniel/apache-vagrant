@@ -1,4 +1,5 @@
 #https://gist.github.com/dikkedimi/663e4db20137fe0cb5f94e1f7690aad5
+#https://gist.github.com/elyssonmr/a2c27be99c19d05a6a99cbc70c825563
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
@@ -14,6 +15,10 @@ Vagrant.configure("2") do |config|
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
   config.vm.box = "ubuntu/jammy64"
+  #config.vm.hostname = "vagrant"
+  config.vm.provider :virtualbox do |vb|
+    vb.name = "Django"
+  end
   #ENV['LC_ALL']="de_DE.UTF-8"
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -126,8 +131,8 @@ Vagrant.configure("2") do |config|
 
     # Setup virtualenvwrapper
     sudo apt install python3-pip -y
-    #sudo apt-get install pkg-config -y
-    #sudo apt-get install default-libmysqlclient-dev -y
+    sudo apt-get install pkg-config -y
+    sudo apt-get install default-libmysqlclient-dev -y
     
 	  pip install virtualenvwrapper
     if ! grep -q VIRTUALENV_ALREADY_ADDED /home/vagrant/.bashrc; then
@@ -135,10 +140,11 @@ Vagrant.configure("2") do |config|
         echo "WORKON_HOME=~/.virtualenvs" >> /home/vagrant/.bashrc
         echo "PROJECT_HOME=/vagrant" >> /home/vagrant/.bashrc
         echo "source /usr/local/bin/virtualenvwrapper.sh" >> /home/vagrant/.bashrc
-    fi   
+    fi 
+    source /usr/local/bin/virtualenvwrapper.sh  
+    export WORKON_HOME="/home/vagrant/.virtualenvs"
     mkvirtualenv django_api --python=python3
-    #workon django_api
-    #echo $VIRTUAL_ENV
+
     .virtualenvs/django_api/bin/python3 -m pip install Django==5.1.2
     .virtualenvs/django_api/bin/python3 -m pip install Djangorestframework==3.15.2
     .virtualenvs/django_api/bin/python3 -m pip install mysqlclient
@@ -154,11 +160,10 @@ Vagrant.configure("2") do |config|
   config.vm.provision "python", type: "shell", inline: <<-SHELL
     cd /usr/Django
     sudo ../../home/vagrant/.virtualenvs/django_api/bin/python3 manage.py collectstatic --no-input
-    nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
     cd ~
   SHELL
 
-  config.vm.provision "build", type: "shell", inline: <<-SHELL
+  config.vm.provision "java", type: "shell", inline: <<-SHELL
     sudo pkill -9 -f Service.jar
     sudo mvn -s /usr/Service/settings.xml -f /usr/Service/pom.xml -DskipTests=true clean install
     sudo cp /usr/Service/target/Service*.jar /usr/Service/target/Service.jar
@@ -167,7 +172,6 @@ Vagrant.configure("2") do |config|
   config.vm.provision "run", type: "shell", inline: <<-SHELL
     nohup java -jar /usr/Service/target/Service.jar > /usr/Service/log.txt 2>&1 &
     cd /usr/Django
-    sudo ../../home/vagrant/.virtualenvs/django_api/bin/python3 manage.py collectstatic --no-input
     nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
     cd ~
   SHELL
