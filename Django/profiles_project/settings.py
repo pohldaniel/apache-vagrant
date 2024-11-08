@@ -14,7 +14,8 @@ import os
 import sys
 import socket
 from pathlib import Path
-print("HostName:" + socket.gethostname())
+
+#print("HostName:" + socket.gethostname())
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -28,7 +29,7 @@ SECRET_KEY = 'django-insecure-wzydlzk(!f0=((=t4f69m8m_9ctfs@o2vpb(vwj#)kc^3in^w6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['tmp', 'localhost']
+ALLOWED_HOSTS = []
 
 
 # Application definition
