@@ -113,12 +113,8 @@ Vagrant.configure("2") do |config|
 	  sudo apt install phpmyadmin php-mbstring php-php-gettext -y 
 
     sudo apt install openjdk-21-jdk -y
-    export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-    export PATH=$PATH:$JAVA_HOME/bin
-
     sudo apt-get install maven -y
-    export MAVEN_HOME=/usr/share/maven
-    export PATH=$PATH:$MAVEN_HOME/bin
+
 
     sudo cp /usr/conf/000-default.conf /etc/apache2/sites-available/000-default.conf
     sudo a2enmod proxy
@@ -140,6 +136,9 @@ Vagrant.configure("2") do |config|
         echo "WORKON_HOME=~/.virtualenvs" >> /home/vagrant/.bashrc
         echo "PROJECT_HOME=/vagrant" >> /home/vagrant/.bashrc
         echo "source /usr/local/bin/virtualenvwrapper.sh" >> /home/vagrant/.bashrc
+        echo "JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64" >> /home/vagrant/.bashrc
+        echo "MAVEN_HOME=/usr/share/maven" >> /home/vagrant/.bashrc
+        echo "STAGE=dev" >> /home/vagrant/.bashrc
     fi 
     source /usr/local/bin/virtualenvwrapper.sh  
     export WORKON_HOME="/home/vagrant/.virtualenvs"
@@ -173,19 +172,30 @@ Vagrant.configure("2") do |config|
     sudo pkill -9 -f Service.jar
     nohup java -jar /usr/Service/target/Service.jar > /usr/Service/log.txt 2>&1 &
 
+    STAGE=`grep -o 'STAGE=[^"]*' /home/vagrant/.bashrc | cut -f2 -d"="` 
     sudo killall uwsgi
-    sleep 2
+    sleep 5
     cd /usr/Django
     nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --static-map /static=/var/www/html/static --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
     cd ~
   SHELL
 
   config.vm.provision "run-python", type: "shell", inline: <<-SHELL
+    #sed -i '/^STAGE/d' /home/vagrant/.bashrc  
+    #echo "STAGE=production" >> /home/vagrant/.bashrc
+    STAGE=`grep -o 'STAGE=[^"]*' /home/vagrant/.bashrc | cut -f2 -d"="` 
     sudo killall uwsgi
-    sleep 2
+    sleep 5
     cd /usr/Django
-    nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --static-map /static=/var/www/html/static --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
+    nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --env=STAGE=$STAGE --static-map /static=/var/www/html/static --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
     cd ~
+  SHELL
+
+  config.vm.provision "stage", type: "shell", inline: <<-SHELL
+    export STAGE=#{ENV['STAGE']}
+    echo $STAGE
+    sed -i '/^STAGE/d' /home/vagrant/.bashrc  
+    echo "STAGE=$STAGE" >> /home/vagrant/.bashrc
   SHELL
 
 end

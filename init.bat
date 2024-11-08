@@ -4,3 +4,5 @@ vagrant provision --provision-with java
 vagrant provision --provision-with python
 vagrant provision --provision-with run-all
 cmd /k
+
+rem vagrant provision --provision-with run-python
