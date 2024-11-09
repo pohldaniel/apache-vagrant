@@ -134,7 +134,6 @@ Vagrant.configure("2") do |config|
     if ! grep -q VIRTUALENV_ALREADY_ADDED /home/vagrant/.bashrc; then
         echo "# VIRTUALENV_ALREADY_ADDED" >> /home/vagrant/.bashrc
         echo "WORKON_HOME=~/.virtualenvs" >> /home/vagrant/.bashrc
-        echo "PROJECT_HOME=/vagrant" >> /home/vagrant/.bashrc
         echo "source /usr/local/bin/virtualenvwrapper.sh" >> /home/vagrant/.bashrc
         echo "JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64" >> /home/vagrant/.bashrc
         echo "MAVEN_HOME=/usr/share/maven" >> /home/vagrant/.bashrc
@@ -155,17 +154,18 @@ Vagrant.configure("2") do |config|
     sudo cp /usr/InitDB/target/InitDB*.jar /usr/InitDB/target/InitDB.jar
     java -jar /usr/InitDB/target/InitDB.jar
   SHELL
-  
-  config.vm.provision "python", type: "shell", inline: <<-SHELL
-    cd /usr/Django
-    sudo ../../home/vagrant/.virtualenvs/django_api/bin/python3 manage.py collectstatic --no-input
-    cd ~
-  SHELL
 
   config.vm.provision "java", type: "shell", inline: <<-SHELL
     sudo pkill -9 -f Service.jar
     sudo mvn -s /usr/Service/settings.xml -f /usr/Service/pom.xml -DskipTests=true clean install
     sudo cp /usr/Service/target/Service*.jar /usr/Service/target/Service.jar
+  SHELL
+
+  config.vm.provision "python", type: "shell", inline: <<-SHELL
+    cd /usr/Django
+    sudo ../../home/vagrant/.virtualenvs/django_api/bin/python3 manage.py collectstatic --no-input
+    #STAGE="production" sudo ../../home/vagrant/.virtualenvs/django_api/bin/python3 manage.py inspectdb  > timera_api/_models.py
+    cd ~
   SHELL
 
   config.vm.provision "run-all", type: "shell", inline: <<-SHELL
@@ -176,18 +176,16 @@ Vagrant.configure("2") do |config|
     sudo killall uwsgi
     sleep 5
     cd /usr/Django
-    nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --static-map /static=/var/www/html/static --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
+    nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --env=STAGE=$STAGE --static-map /static=/var/www/html/static --http :8000 --module timera_project.wsgi:application > /usr/Django/log.txt 2>&1 &
     cd ~
   SHELL
 
   config.vm.provision "run-python", type: "shell", inline: <<-SHELL
-    #sed -i '/^STAGE/d' /home/vagrant/.bashrc  
-    #echo "STAGE=production" >> /home/vagrant/.bashrc
     STAGE=`grep -o 'STAGE=[^"]*' /home/vagrant/.bashrc | cut -f2 -d"="` 
     sudo killall uwsgi
     sleep 5
     cd /usr/Django
-    nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --env=STAGE=$STAGE --static-map /static=/var/www/html/static --http :8000 --module profiles_project.wsgi:application > /usr/Django/log.txt 2>&1 &
+    nohup ../../home/vagrant/.virtualenvs/django_api/bin/uwsgi --env=STAGE=$STAGE --static-map /static=/var/www/html/static --http :8000 --module timera_project.wsgi:application > /usr/Django/log.txt 2>&1 &
     cd ~
   SHELL
 

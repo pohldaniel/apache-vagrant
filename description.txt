@@ -34,15 +34,17 @@ pip install mysqlclient
 python3 django_project/manage.py makemigrations django_api
 python3 django_project/manage.py migrate
 
+STAGE="production" python3 manage.py inspectdb > timera_api/_models.py
+
 workon django_api
 deactivate
 
-python3 -m django startproject django_project
+python3 -m django startproject timera_project
 
-python3 django_project/manage.py startapp django_api
+python3 timera_project/manage.py startapp timera_api
 
 
-sudo python3 /usr/Django/manage.py runserver 0.0.0.0:8000
+STAGE="production" python3 timera_project/manage.py runserver 0.0.0.0:8000
 sudo pip3 install pymysql
 
 sudo pip install mysqlclient
